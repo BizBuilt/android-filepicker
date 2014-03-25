@@ -1,0 +1,22 @@
+<resources>
+
+    <string name="app_name">FilepickerDroid</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_file_picker">Filepicker</string>
+    <string name="title_activity_file_picker_auth">FilepickerAuthActivity</string>
+    <string name="file_picker_animation_duration">400</string>
+    <string name="mwe_button_upload">Upload</string>
+    <string name="mwe_button_save">Save</string>
+	<string name="mwe_choose_app">Choose app…</string>
+	<string name="mwe_photos_multi_select">Photos (multi-select)</string>
+	<string name="mwe_of">of</string>
+	<string name="mwe_downloading">Downloading</string>
+	<string name="mwe_saving">Saving</string>
+	<string name="mwe_saved_succesfully">Saved successfully!</string>
+	<string name="mwe_api_key_not_set">No Filepicker.io API Key set!</string>
+	<string name="mwe_choose_image_source">Choose image source…</string>
+	<string name="mwe_wait">Wait…</string>
+	<string name="mwe_upload">Upload</string>
+	<string name="mwe_files">files</string>
+	
+</resources>
