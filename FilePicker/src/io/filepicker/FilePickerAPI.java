@@ -132,17 +132,17 @@ public class FilePickerAPI {
 		services.add(new Service("Gallery", "/Gallery/", new String[] { "image/*" }, R.drawable.glyphicons_008_film, false, ""));
 		services.add(new Service("Camera", "/Camera/", new String[] { "image/jpg" }, R.drawable.glyphicons_011_camera, false, ""));
 		services.add(new Service("Dropbox", "/Dropbox/", new String[] { "*/*" }, R.drawable.glyphicons_361_dropbox, true, "dropbox"));
+		services.add(new Service("Box", "/Box/", new String[] { "*/*" }, R.drawable.glyphicons_154_show_big_thumbnails, true, "box"));
 		services.add(new Service("Facebook", "/Facebook/", new String[] { "image/*" }, R.drawable.glyphicons_390_facebook, true, "facebook"));
+		services.add(new Service("Google Drive", "/GDrive/", new String[] { "*/*" }, R.drawable.gdrive, false, "gdrive"));
+		services.add(new Service("Gmail", "/Gmail/", new String[] { "*/*" }, R.drawable.glyphicons_399_email, false, "gmail"));
 		services.add(new Service("Instagram", "/Instagram/", new String[] { "image/*" }, R.drawable.instagram, true, "instagram"));
 		services.add(new Service("Flickr", "/Flickr/", new String[] { "image/*" }, R.drawable.glyphicons_395_flickr, true, "flickr"));
 		services.add(new Service("Picasa", "/Picasa/", new String[] { "image/*" }, R.drawable.glyphicons_366_picasa, true, "picasa"));
-		services.add(new Service("Box", "/Box/", new String[] { "*/*" }, R.drawable.glyphicons_154_show_big_thumbnails, true, "box"));
-		services.add(new Service("Gmail", "/Gmail/", new String[] { "*/*" }, R.drawable.glyphicons_399_email, false, "gmail"));
 		services.add(new Service("Github", "/Github/", new String[] { "*/*" }, R.drawable.glyphicons_381_github, false, "github"));
-		services.add(new Service("Google Drive", "/GDrive/", new String[] { "*/*" }, R.drawable.gdrive, false, "gdrive"));
 //PMB LLC Start	
 		services.add(new Service("SkyDrive", "/SkyDrive/", new String[] { "*/*" }, R.drawable.glyphicons_sb3_skydrive, false, "skydrive"));
-		services.add(new Service("Evernote", "/Evernote/", new String[] { "*/*" }, R.drawable.glyphicons_371_evernote, false, "evernote"));
+		//services.add(new Service("Evernote", "/Evernote/", new String[] { "*/*" }, R.drawable.glyphicons_371_evernote, false, "evernote"));
 //		services.add(new Service("Web Images", "/Imagesearch/", new String[] { "*/*" }, R.drawable.glyphicons_027_search, false, "imagesearch"));
 //PBM LLC End
 		
