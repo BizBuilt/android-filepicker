@@ -327,8 +327,28 @@ public class FilePicker extends Activity {
 							
 								if (saveas) {
 									intent.setData(filesToSave.getData());
-									intent.setClipData(filesToSave.getClipData());
+									
+									//intent.setClipData(filesToSave.getClipData());
+									if (filesToSave.getExtras() != null) {
+										//Log.d(TAG, "*** ADDING EXTRAS ***");
+										
+										String[] localFilePaths = filesToSave.getExtras().getStringArray("localFilePaths");
+										String[] fpUrls = filesToSave.getExtras().getStringArray("fpUrls");
+										String[] fpMimeTypes = filesToSave.getExtras().getStringArray("fpMimeTypes");
+										/*
+										for (int j = 0; j < localFilePaths.length; j++) {
+											Log.d(TAG, "localFilePaths[" + j + "]: " + localFilePaths[j]);
+											Log.d(TAG, "fpUrls[" + j + "]: " + fpUrls[j]);
+											Log.d(TAG, "fpMimeTypes[" + j + "]: " + fpMimeTypes[j]);
+										}*/
+										
+										intent.putExtra("localFilePaths", localFilePaths);
+										intent.putExtra("fpUrls", fpUrls);
+										intent.putExtra("fpMimeTypes", fpMimeTypes);
+									}
+
 									intent.setAction(SAVE_CONTENT);
+									
 									/*
 									if (extension.length() > 0) {
 										intent.putExtra("extension", extension);
@@ -354,8 +374,9 @@ public class FilePicker extends Activity {
 							showProgress("Downloading");
 //PBM LLC End							
 							int SDK_INT = android.os.Build.VERSION.SDK_INT;
-							if (SDK_INT >= 11)
+							if (SDK_INT >= 11) {
 								currentview.setAlpha((float) 0.3);
+							}
 							new PickFileTask().execute(inode.getPath());
 						}
 					}
@@ -434,6 +455,11 @@ public class FilePicker extends Activity {
 			
 			int numInodes = inodes.length;
 			int numErrors = 0;
+			
+			String[] localFilePaths = new String[numInodes];
+			String[] fpUrls = new String[numInodes];
+			String[] fpMimeTypes = new String[numInodes];
+			
 			for (int i = 0; i < numInodes; i++) {
 				
 				if (i == 0 && numInodes == 1) {
@@ -445,7 +471,7 @@ public class FilePicker extends Activity {
 				
 				Inode inode = inodes[i];
 				FPFile fpFile = null;
-				Uri localPath = null;
+				Uri localFilePath = null;
 				String fpUrl = null;
 				String fpMimeType = null;
 				try {
@@ -458,11 +484,12 @@ public class FilePicker extends Activity {
 					//Log.d(TAG, "inode.getPath(): " + inode.getPath());
 					fpFile = FilePickerAPI.getInstance().getLocalFileForPath(inode.getPath(),FilePicker.this);
 					//Log.d(TAG, "fpFile: " + fpFile);
-					localPath = Uri.parse(fpFile.getLocalPath());
+					localFilePath = Uri.parse(fpFile.getLocalPath());
 					//Log.d(TAG, "localPath: " + localPath);
 					fpUrl = fpFile.getFPUrl();
 					//Log.d(TAG, "fpUrl: " + fpUrl);
 					fpMimeType = getType(fpFile);
+					
 					//Log.d(TAG, "mimeType: " + fpMimeType);
 				}
 				catch (AuthError e) {
@@ -470,43 +497,24 @@ public class FilePicker extends Activity {
 					numErrors++;
 				}
 				finally {
-					if (numInodes == 1) {
-						
-						/*
-						 * MWE - Only one image to return, so set data and fpurl extra
-						 */
-						
-						resultIntent.setData(localPath);
-						resultIntent.putExtra("fpurl", fpUrl);
-						resultIntent.putExtra("fpMimeType", fpMimeType);
-					}
-					else {
-						
-						/*
-						 * MWE - Multiple images to return so use clip data 
-						 */
-						
-						Intent subIntent = new Intent();
-						subIntent.setData(localPath);
-						subIntent.putExtra("fpurl", fpUrl);
-						subIntent.putExtra("fpMimeType", fpMimeType);
-						//Log.d(TAG, "6. mimeType: " + fpMimeType);
-						ClipData.Item clipDataItem = new ClipData.Item(subIntent);
-						if (clipData == null) {
-							clipData = new ClipData(null, new String[]{"text/uri-list"}, clipDataItem);
-						}
-						else {
-							clipData.addItem(clipDataItem);
-						}
-						resultIntent.setClipData(clipData);
-						
-					}
-
+					
+					/*
+					 * MWE - Store URLs and mime types in array (to be added as extras)
+					 */
+					localFilePaths[i] = localFilePath.toString();
+					fpUrls[i] = fpUrl;
+					fpMimeTypes[i] = fpMimeType;
+					
 				}
 
 			}
 			
+			resultIntent.putExtra("localFilePaths", localFilePaths);
+			resultIntent.putExtra("fpUrls", fpUrls);
+			resultIntent.putExtra("fpMimeTypes", fpMimeTypes);
+			
 			resultIntent.putExtra("numErrors", numErrors);
+			
 			return resultIntent;
 			
 		}
@@ -562,10 +570,10 @@ public class FilePicker extends Activity {
 			Intent resultIntent = new Intent();
 			Uri localPath = Uri.parse("file://" + result.getLocalPath());
 			resultIntent.setData(localPath);
-			resultIntent.putExtra("fpurl", result.getFPUrl());
+			resultIntent.putExtra("fpUrl", result.getFPUrl());
 			
-			String mimeType = getType(result);
-			resultIntent.putExtra("fpMimeType", mimeType);
+			String fpMimeType = getType(result);
+			resultIntent.putExtra("fpMimeType", fpMimeType);
 			//Log.d(TAG, "7. mimeType: " + mimeType);
 			
 			resultIntent.putExtra("fpfile", result);
@@ -591,6 +599,11 @@ public class FilePicker extends Activity {
 			int numUris = intents.length;
 			//Log.d(TAG, "8. numUris: " + numUris);
 			int numErrors = 0;
+			
+			String[] localFilePaths = new String[numUris];
+			String[] fpUrls = new String[numUris];
+			String[] fpMimeTypes = new String[numUris];
+			
 			for (int i = 0; i < numUris; i++) {
 				
 				if (i == 0 && numUris == 1) {
@@ -601,14 +614,14 @@ public class FilePicker extends Activity {
 				}
 				
 				FilePickerAPI fpapi = FilePickerAPI.getInstance();
-				Uri localUri = intents[i].getData();
+				Uri localFilePath = intents[i].getData(); //todo
 				//Log.d(TAG, "8. localUri: " + localUri);
-				String mimeType = getType(intents[i]);
+				String fpMimeType = getType(intents[i]);
 				//Log.d(TAG, "8. mimeType: " + mimeType);
 				
 				String fpUrl = null;
 				try {
-					FPFile fpFile = fpapi.uploadFileToTemp(localUri, FilePicker.this, mimeType);
+					FPFile fpFile = fpapi.uploadFileToTemp(localFilePath, FilePicker.this, fpMimeType);
 					fpUrl = fpFile.getFPUrl();
 				}
 				catch (IOException e) {
@@ -616,40 +629,23 @@ public class FilePicker extends Activity {
 					numErrors++;
 				}
 				finally {
-					if (numUris == 1) {
-						
-						/*
-						 * MWE - Only one image to return, so set data and extras
-						 */
-						
-						resultIntent.setData(localUri);
-						resultIntent.putExtra("fpurl", fpUrl);
-						resultIntent.putExtra("fpMimeType", mimeType);
-					}
-					else {
-						
-						/*
-						 * MWE - Multiple images to return so add info to clip 
-						 */
 					
-						Intent subIntent = new Intent(); 
-						subIntent.setData(localUri);
-						subIntent.putExtra("fpurl", fpUrl);
-						subIntent.putExtra("fpMimeType", mimeType);
-						ClipData.Item clipDataItem = new ClipData.Item(subIntent);
-						if (clipData == null) {
-							clipData = new ClipData(null, new String[]{"text/uri-list"}, clipDataItem);
-						}
-						else {
-							clipData.addItem(clipDataItem);
-						}
-						resultIntent.setClipData(clipData);
-						
-					}
+					/*
+					 * MWE - Store URLs and mime types in array (to be added as extras)
+					 */
+					localFilePaths[i] = localFilePath.toString();
+					fpUrls[i] = fpUrl;
+					fpMimeTypes[i] = fpMimeType;
+					
 				}
 			}
 			
+			resultIntent.putExtra("localFilePaths", localFilePaths);
+			resultIntent.putExtra("fpUrls", fpUrls);
+			resultIntent.putExtra("fpMimeTypes", fpMimeTypes);
+			
 			resultIntent.putExtra("numErrors", numErrors);
+			
 			return resultIntent;
 		}
 
@@ -738,11 +734,38 @@ public class FilePicker extends Activity {
 			
 			int numErrors = 0;
 			
+			String[] localFilePaths = filesToSave.getExtras().getStringArray("localFilePaths");
+			String[] fpUrls = filesToSave.getExtras().getStringArray("fpUrls");
+			String[] fpMimeTypes = filesToSave.getExtras().getStringArray("fpMimeTypes");
+			int numFiles = fpUrls.length;
+			for (int i = 0; i < numFiles; i++) {
+				try {
+					if (i == 0 && numFiles == 1) {
+						publishProgress("");
+					}
+					else {
+						publishProgress(new StringBuilder().append(i + 1).append(" ").append(getResources().getString(R.string.mwe_of)).append(" ").append(numFiles).toString()); 
+					}
+					Uri uri = Uri.parse(localFilePaths[i]);
+					String mimeType = fpMimeTypes[i];
+					//Log.d(TAG, "1. mimeType: " + mimeType);
+					String filename = fpapi.getFilenameFromUri(uri);
+					//Log.d(TAG, "1. filename: " + filename);
+					String fullPath = path + filename + fpapi.getExtensionForMimeType(mimeType);
+					//Log.d(TAG, "1. fullPath: " + fullPath);
+					FilePickerAPI.getInstance().saveFileAs(fullPath, uri, FilePicker.this, mimeType);
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+					numErrors++;
+				}
+			}
+			
+			/*
 			if (filesToSave != null && filesToSave.getClipData() != null && filesToSave.getClipData().getItemCount() > 0) {
 				
-				/*
-				 * MWE - Multiple files. Get URIs from clip.
-				 */
+				// MWE - Multiple files. Get URIs from clip.
+				
 				int numFiles = filesToSave.getClipData().getItemCount();
 				for (int i = 0; i < numFiles; i++) {
 					try {
@@ -768,9 +791,9 @@ public class FilePicker extends Activity {
 				}
 			}
 			else {
-				/*
-				 * MWE - Single file. Get URI from data.
-				 */
+
+				// MWE - Single file. Get URI from data.
+				 
 				try {
 					Uri uri = filesToSave.getData();
 					String mimeType = filesToSave.getExtras().getString("fpMimeType");
@@ -786,7 +809,7 @@ public class FilePicker extends Activity {
 					e.printStackTrace();
 					numErrors++;
 				}
-			}
+			}*/
 			
 			return numErrors;
 		}
@@ -906,8 +929,9 @@ public class FilePicker extends Activity {
 				//Log.d(TAG, "myIntent.getData(): " + myIntent.getData());
 				//Log.d(TAG, "myIntent.getClipData(): " + myIntent.getClipData());
 
-				if (myIntent.getData() == null && (myIntent.getClipData() == null || myIntent.getClipData().getItemCount() == 0)) {
-					Log.e(TAG, "No data passed in intent");
+				//if (myIntent.getData() == null && (myIntent.getClipData() == null || myIntent.getClipData().getItemCount() == 0)) {
+				if (myIntent.getData() == null && (myIntent.getExtras() == null || myIntent.getExtras().getStringArray("fpUrls") == null || myIntent.getExtras().getStringArray("fpUrls").length == 0)) {
+					Log.e(TAG, "No 'fpUrls' data found in intent");
 					setResult(RESULT_CANCELED);
 					finish();
 				}
@@ -1111,6 +1135,9 @@ public class FilePicker extends Activity {
 
 	}
 // PBM LLC Start
+	/*
+	 * MWE - This method is called after the user has selected the image(s) from the Gallery / Photo app
+	 */
 	@SuppressLint("NewApi")
 	public void getFilesFromGallery(Intent intent) {
 		//Log.d(TAG, "getFilesFromGallery(" + intent + ")");
@@ -1122,52 +1149,33 @@ public class FilePicker extends Activity {
 		 */
 		//Uri[] uris;
 		ClipData clipData = intent.getClipData();
-		Intent[] intents;
-		Uri tempUri;
-		if (clipData != null) { 
-			/*
-			 * MWE - Multiple images selected
-			 */
+		
+		if (clipData == null) { // MWE - Single image selected
+
+			//Log.d(TAG, "Single local image selected");
+            
+			new UploadLocalFileTask().execute(intent);
+		}
+		else { //clipData != null. Multiple images selected.
+
 			//Log.d(TAG, "Multiple local images selected");
+			
+			/*
+			 * MWE - Convert the clip data into an array of intents
+			 */
+			
 			int numItems = clipData.getItemCount();
-			intents = new Intent[numItems];
+			Intent[] intents = new Intent[numItems];
+			Uri tempUri;
 			for (int i = 0; i < numItems; i++) {
 				intents[i] = new Intent();
 				tempUri = clipData.getItemAt(i).getUri();
 				intents[i].setData(tempUri);
-				//String mime = fpapi.getMimeTypeForContentUri(tempUri, this);
-				//Log.d(TAG, "4a. mimeType: " + mime);
 			}
 			
 			new UploadLocalFileTask().execute(intents);
-		}
-		else { //clipData == null
-			/*
-			 * MWE - Single image selected
-			 */
-			//Log.d(TAG, "***** Single local image selected");
 			
-			//Log.d(TAG, "4b. uri: " + intent.getData());
-			
-			//String mime = fpapi.getMimeTypeForContentUri(intent.getData(), this);
-			//Log.d(TAG, "4b. mimeType: " + mime);
-			/*
-			intent.getExtras();
-			Bundle extras = intent.getExtras();
-        	Set<String> set = extras.keySet();
-        	Iterator<String> iterator = set.iterator();
-            while(iterator.hasNext()) {
-                String setElement = iterator.next();
-                Log.d(TAG, "Set:" + setElement + "... " + intent.getExtras().get(setElement));
-            }*/
-            
-            //Log.d(TAG, "4c. uri: " + intent.getData());
-            
-			new UploadLocalFileTask().execute(intent);
-            
 		}
-		//processSingleLocalImage(uri);
-		//new UploadLocalFileTask().execute(uris);
 	}
 	
 //	private void processSingleLocalImage(Uri uri) {

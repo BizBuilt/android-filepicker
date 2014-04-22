@@ -4,6 +4,7 @@ package com.android.filepickertest;
 //import java.util.Iterator;
 //import java.util.Set;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -75,7 +76,8 @@ public class MainActivity extends Activity {
 			//Log.d(LOGTAG, "Single - startActivityForResult...");
 			startActivityForResult(intent, FilePickerAPI.REQUEST_CODE_SAVEFILE);
 		}
-		else if (photoIntent != null && photoIntent.getClipData() != null && photoIntent.getClipData().getItemCount() > 0) {
+		//else if (photoIntent != null && photoIntent.getClipData() != null && photoIntent.getClipData().getItemCount() > 0) {
+		else if (photoIntent != null && photoIntent.getExtras() != null && photoIntent.getExtras().getStringArray("fpUrls") != null && photoIntent.getExtras().getStringArray("fpUrls").length > 0) {
 			/*
 			 * MWE - Multiple images selected. Store multiple data in clip.
 			 */
@@ -83,7 +85,10 @@ public class MainActivity extends Activity {
 			intent.setAction(FilePicker.SAVE_CONTENT);
 			//intent.putExtra("extension", ".png");
 			intent.setData(photoIntent.getData()); //should be null
-			intent.setClipData(photoIntent.getClipData());
+			//intent.setClipData(photoIntent.getClipData());
+			intent.putExtra("localFilePaths", photoIntent.getExtras().getStringArray("localFilePaths"));
+			intent.putExtra("fpUrls", photoIntent.getExtras().getStringArray("fpUrls"));
+			intent.putExtra("fpMimeTypes", photoIntent.getExtras().getStringArray("fpMimeTypes"));
 			//Log.d(LOGTAG, "Multiple - startActivityForResult...");
 			startActivityForResult(intent, FilePickerAPI.REQUEST_CODE_SAVEFILE);
 		}
@@ -94,7 +99,7 @@ public class MainActivity extends Activity {
 	
 	void openFilePicker(){
 		Intent intent = new Intent(this, FilePicker.class);
-		startActivityForResult(intent, FilePickerAPI.REQUEST_CODE_GETFILE);
+		startActivityForResult(intent, FilePickerAPI.REQUEST_CODE_GETFILE); //Loads the "Choose image source..." screen
 	}
 	
 	@SuppressLint("NewApi")
@@ -111,21 +116,23 @@ public class MainActivity extends Activity {
 	        /*
 	         * MWE - quick show all selected paths / URLs
 	         */
-	        ClipData clipData = intent.getClipData();
+	        //ClipData clipData = intent.getClipData();
 	        //if (intent.getExtras().getString("allSelectedLocalPaths") != null) {
-	        if (clipData == null) {
+	        //if (clipData == null) {
+	        Uri localFilePath = intent.getData();
+	        if (localFilePath != null) {
 	        	/*
 	        	 * MWE - Single image
 	        	 */
 	        	
 	        	//Log.d(LOGTAG, "File path:" + intent.getData());
-		        //Log.d(LOGTAG, "Ink file URL: " +  intent.getExtras().getString("fpurl"));
+		        //Log.d(LOGTAG, "Ink file URL: " +  intent.getExtras().getString("fpUrl"));
 		        
-		        mTxtLocalPath.setText("File path:\n" + intent.getData());
-		        mTxtGlobalPath.setText("Ink file URL:\n" +  intent.getExtras().getString("fpurl"));
+		        mTxtLocalPath.setText("Local file path:\n" + localFilePath);
+		        mTxtGlobalPath.setText("Ink file URL:\n" +  intent.getExtras().getString("fpUrl"));
 	        	
 	        }
-	        else { //clipData != null
+	        else { //localFilePath == null
 	        	/*
 	        	 * MWE - Multiple images
 	        	 */
@@ -135,12 +142,15 @@ public class MainActivity extends Activity {
 	        	 */
 	        	StringBuilder sbLocal = new StringBuilder();
 	        	StringBuilder sbRemote = new StringBuilder();
-	        	int numImages = clipData.getItemCount();
+	        	//int numImages = clipData.getItemCount();
+	        	String[] fpUrls = intent.getExtras().getStringArray("fpUrls");
+	        	String[] localFilePaths = intent.getExtras().getStringArray("localFilePaths");
+	        	int numImages = fpUrls.length;
 	        	for (int i = 0; i < numImages; i++) {
-	        		sbLocal.append(i).append(". ").append(clipData.getItemAt(i).getIntent().getData()).append("\n");
-	        		sbRemote.append(i).append(". ").append(clipData.getItemAt(i).getIntent().getExtras().getString("fpurl")).append("\n");
+	        		sbLocal.append(i + 1).append(". ").append(localFilePaths[i]).append("\n");
+	        		sbRemote.append(i + 1).append(". ").append(fpUrls[i]).append("\n");
 	        	}
-	        	mTxtLocalPath.setText("File paths:\n" + sbLocal);
+	        	mTxtLocalPath.setText("Local file paths:\n" + sbLocal);
 		        mTxtGlobalPath.setText("Ink file URLs:\n" + sbRemote);
 	        }
 	        
