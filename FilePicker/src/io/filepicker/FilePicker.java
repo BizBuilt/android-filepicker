@@ -451,7 +451,7 @@ public class FilePicker extends Activity {
 			 */
 			Intent resultIntent = new Intent();
 			resultIntent.setData(null);
-			ClipData clipData = null;
+//			ClipData clipData = null;
 			
 			int numInodes = inodes.length;
 			int numErrors = 0;
@@ -594,7 +594,7 @@ public class FilePicker extends Activity {
 			 */
 			Intent resultIntent = new Intent();
 			resultIntent.setData(null);
-			ClipData clipData = null;
+//			ClipData clipData = null;
 			
 			int numUris = intents.length;
 			//Log.d(TAG, "8. numUris: " + numUris);
